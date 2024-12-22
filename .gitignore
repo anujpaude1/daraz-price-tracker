@@ -1,1 +1,8 @@
 myenv
+.env
+logs.txt
+log.txt
+test.py
+response_log.json
+temp
+__pycache__

@@ -1,0 +1,40 @@
+generator client {
+  provider = "prisma-client-py"
+}
+
+datasource db {
+  provider = "sqlite" // or "postgresql", "mysql", "sqlserver"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                   Int       @id @default(autoincrement())
+  telegramId           String    @unique
+  name                 String
+  notificationInterval String // daily or weekly
+  notificationTime     String // Time in "HH:mm" format to send notifications about price change
+  products             Product[] @relation("UserProducts")
+}
+
+model Product {
+  id               Int       @id @default(autoincrement())
+  name             String
+  productUrl       String
+  productRefer     String
+  photoUrl         String
+  lowestPrice      Int
+  highestPrice     Int
+  uniqueIdentifier String    @unique
+  lastFetched      DateTime?
+  prices           Price[]
+  userId           Int
+  user             User      @relation(fields: [userId], references: [id], name: "UserProducts")
+}
+
+model Price {
+  id        Int      @id @default(autoincrement())
+  productId Int
+  price     Int
+  timestamp DateTime @default(now())
+  product   Product  @relation(fields: [productId], references: [id])
+}

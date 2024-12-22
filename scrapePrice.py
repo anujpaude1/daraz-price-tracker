@@ -1,96 +1,80 @@
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
+import os
+import undetected_chromedriver as uc
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium_stealth import stealth
+from pprint import pformat
 import json
 import time
+from selenium.webdriver import DesiredCapabilities
+from urllib.parse import urlparse
 
-# Set Chrome options
-options = Options()
-options.page_load_strategy = 'none'
-options.add_argument("start-maximized")
-# Set a normal user agent string (simulating a real browser)
-options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36")
+class DarazScraper:
+    def __init__(self):
+        # Initialize undetected_chromedriver with the required options
+        options = uc.ChromeOptions()
+        options.page_load_strategy = 'none'
+        options.set_capability('goog:loggingPrefs', {'performance': 'ALL'})
+        
+        self.driver = uc.Chrome(options=options, enable_cdp_events=True, chrome_options=options)
+        self.driver.maximize_window()
+        
+        # Open the Daraz homepage
+        homepage_url = "https://www.daraz.com.np/"
+        self.driver.get(homepage_url)
+        
+        # Wait for the homepage to load completely
+        homepage_timeout = 5  # seconds
+        wait = WebDriverWait(self.driver, homepage_timeout)
+        wait.until(EC.presence_of_element_located((By.ID, "topActionHeader")))
+        print("Homepage loaded successfully.")
+        
+        time.sleep(2)
+    
+    def get_product_details(self, product_url):
+        self.driver.get(product_url)
+        
+        wait = WebDriverWait(self.driver, 10)
+        current_price_element = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, ".pdp-price_type_normal")))
+        current_price = current_price_element.text.strip()
+        
+        main_image_element = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, ".pdp-mod-common-image.gallery-preview-panel__image")))
+        main_image_url = main_image_element.get_attribute('src')
+        
+        # Extract product name
+        name_element = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, ".pdp-mod-product-badge-title")))
+        product_name = name_element.text.strip()
+        
+        # Extract original price (if available)
+        try:
+            original_price_element = self.driver.find_element(By.CSS_SELECTOR, ".pdp-price_type_deleted")
+            original_price = original_price_element.text.strip()
+        except:
+            original_price = None
 
-# Disable WebGL to avoid detection based on graphics capabilities
-options.add_argument("--disable-webgl")
+        # Get the final URL after redirection
+        final_url = self.driver.current_url
+        
+        # Extract product ID from the URL
+        parsed_url = urlparse(final_url)
+        product_id = parsed_url.path.split('products/')[-1].split('.html')[0]
+        
+        return {
+            "Current Price": current_price,
+            "Original Price": original_price,
+            "Image URL": main_image_url,
+            "Product Name": product_name,
+            "Final URL": final_url[:final_url.find('.html') + 5],
+            "Product ID": product_id
+        }
+    
+    def close(self):
+        self.driver.quit()
 
-# Disable the automation flag (some websites detect Selenium by this)
-options.add_argument("--disable-blink-features=AutomationControlled")
-
-# Disable extensions to avoid detection
-options.add_argument("--disable-extensions")
-
-# Uncomment the next line to run in headless mode
-# options.add_argument('--headless')  
-options.add_argument('--disable-gpu')
-
-# Enable logging of network events in Chrome
-options.set_capability('goog:loggingPrefs', {'performance': 'ALL'})
-
-# Initialize the WebDriver
-service = Service('/usr/bin/chromedriver')  # Replace with the path to your ChromeDriver
-driver = webdriver.Chrome(service=service, options=options)
-
-stealth(driver,
-        languages=["en-US", "en"],
-        vendor="Google Inc.",
-        platform="Win32",
-        webgl_vendor="Intel Inc.",
-        renderer="Intel Iris OpenGL Engine",
-        fix_hairline=True,
-        )
-
-try:
-    # Step 1: Open the Daraz homepage
-    homepage_url = "https://www.daraz.com.np/"
-    driver.get(homepage_url)
-
-    # Use a timeout for the homepage to load, after which we proceed to the product page
-    homepage_timeout = 5  # seconds
-    wait.until(EC.presence_of_element_located((By.ID, "topActionHeader")))
-    print("Homepage loading delayed or ignored.")
-
-    # Step 2: Navigate to the specific product URL
+# Example usage:
+if __name__ == "__main__":
+    scraper = DarazScraper()
     product_url = "https://www.daraz.com.np/products/sunisa-water-beauty-air-pad-cc-cream-lightweight-long-lasting-foundation-for-flawless-skin-i174376401-s1195850829.html"
-    driver.get(product_url)
-
-    try:
-        # Wait for the product page to load or for 20 seconds (whichever is first)
-        WebDriverWait(driver, 20).until(
-            lambda d: d.execute_script('return document.readyState') == 'complete'
-        )
-    except:
-        # Stop loading if the timeout is exceeded
-        driver.execute_script("window.stop();")
-        print("Product page loading stopped due to timeout.")
-
-    print("Product page loaded or forcefully stopped.")
-
-    # Additional delay to ensure XHR requests are completed
-    time.sleep(2)
-
-    # Get all logged performance logs
-    logs = driver.get_log('performance')
-
-    # Step 3: Look for XHR requests to the desired URL
-    for entry in logs:
-        log = json.loads(entry['message'])['message']
-        if log['method'] == 'Network.responseReceived':
-            url = log['params']['response']['url']
-            if url.startswith("https://acs-m.daraz.com.np/h5/mtop.global.detail.web.getdetailinfo/1.0/"):
-                # Fetch the response body
-                request_id = log['params']['requestId']
-                response_body = driver.execute_cdp_cmd("Network.getResponseBody", {"requestId": request_id})
-                print(f"URL: {url}")
-                print("Response Body:")
-                print(json.dumps(response_body, indent=2))
-                break
-
-
-finally:
-    # Close the WebDriver
-    driver.quit()
+    details = scraper.get_product_details(product_url)
+    print(details)
+    scraper.close()
