@@ -32,41 +32,45 @@ class DarazScraper:
         time.sleep(2)
     
     def get_product_details(self, product_url):
-        self.driver.get(product_url)
-        
-        wait = WebDriverWait(self.driver, 10)
-        current_price_element = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, ".pdp-price_type_normal")))
-        current_price = current_price_element.text.strip()
-        
-        main_image_element = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, ".pdp-mod-common-image.gallery-preview-panel__image")))
-        main_image_url = main_image_element.get_attribute('src')
-        
-        # Extract product name
-        name_element = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, ".pdp-mod-product-badge-title")))
-        product_name = name_element.text.strip()
-        
-        # Extract original price (if available)
-        try:
-            original_price_element = self.driver.find_element(By.CSS_SELECTOR, ".pdp-price_type_deleted")
-            original_price = original_price_element.text.strip()
-        except:
-            original_price = None
+        try :
+            self.driver.get(product_url)
+            
+            wait = WebDriverWait(self.driver, 10)
+            current_price_element = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, ".pdp-price_type_normal")))
+            current_price = current_price_element.text.strip()
+            
+            main_image_element = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, ".pdp-mod-common-image.gallery-preview-panel__image")))
+            main_image_url = main_image_element.get_attribute('src')
+            
+            # Extract product name
+            name_element = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, ".pdp-mod-product-badge-title")))
+            product_name = name_element.text.strip()
+            
+            # Extract original price (if available)
+            try:
+                original_price_element = self.driver.find_element(By.CSS_SELECTOR, ".pdp-price_type_deleted")
+                original_price = original_price_element.text.strip()
+            except:
+                original_price = None
 
-        # Get the final URL after redirection
-        final_url = self.driver.current_url
-        
-        # Extract product ID from the URL
-        parsed_url = urlparse(final_url)
-        product_id = parsed_url.path.split('products/')[-1].split('.html')[0]
-        
-        return {
-            "Current Price": current_price,
-            "Original Price": original_price,
-            "Image URL": main_image_url,
-            "Product Name": product_name,
-            "Final URL": final_url[:final_url.find('.html') + 5],
-            "Product ID": product_id
-        }
+            # Get the final URL after redirection
+            final_url = self.driver.current_url
+            
+            # Extract product ID from the URL
+            parsed_url = urlparse(final_url)
+            product_id = parsed_url.path.split('products/')[-1].split('.html')[0]
+            
+            return {
+                "Current Price": current_price,
+                "Original Price": original_price,
+                "Image URL": main_image_url,
+                "Product Name": product_name,
+                "Final URL": final_url[:final_url.find('.html') + 5],
+                "Product ID": product_id
+            }
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            raise e
     
     def close(self):
         self.driver.quit()

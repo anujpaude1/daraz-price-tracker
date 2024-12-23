@@ -1,3 +1,5 @@
+import matplotlib
+matplotlib.use('Agg')  # Use the Agg backend for non-interactive plotting
 import matplotlib.pyplot as plt
 from prisma import Prisma
 import datetime
