@@ -8,10 +8,11 @@ datasource db {
 }
 
 model User {
-  id           Int           @id @default(autoincrement())
-  telegramId   String        @unique
-  name         String
-  userProducts UserProduct[]
+  id               Int           @id @default(autoincrement())
+  telegramId       String        @unique
+  name             String
+  notificationTime String // Time in "HH:mm" format to send notifications about price change
+  userProducts     UserProduct[]
 }
 
 model Product {
@@ -41,9 +42,9 @@ model UserProduct {
   userId               Int
   productId            Int
   notificationInterval String // daily or weekly
-  notificationTime     String // Time in "HH:mm" format to send notifications about price change
   user                 User    @relation(fields: [userId], references: [id])
   product              Product @relation(fields: [productId], references: [id])
+  minPrice             Int?
 
   @@unique([userId, productId])
 }

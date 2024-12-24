@@ -6,3 +6,5 @@ test.py
 response_log.json
 temp
 __pycache__
+app.log
+test.py

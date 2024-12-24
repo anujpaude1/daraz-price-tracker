@@ -29,7 +29,7 @@ class DarazScraper:
         wait.until(EC.presence_of_element_located((By.ID, "topActionHeader")))
         print("Homepage loaded successfully.")
         
-        time.sleep(2)
+        time.sleep(4)
     
     def get_product_details(self, product_url):
         try :
@@ -73,6 +73,9 @@ class DarazScraper:
             raise e
     
     def close(self):
+        self.driver.quit()
+
+    def __del__(self):
         self.driver.quit()
 
 # Example usage:
