@@ -5,21 +5,25 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from pprint import pformat
 import json
-import time,datetime
+import time
+from datetime import datetime
 from selenium.webdriver import DesiredCapabilities
 from urllib.parse import urlparse
-
 import asyncio
-
 class DarazScraper:
     def __init__(self):
         # Initialize undetected_chromedriver with the required options
         options = uc.ChromeOptions()
         options.page_load_strategy = 'none'
-        options.set_capability('goog:loggingPrefs', {'performance': 'ALL'})
-        options.headless=True
-        
-        self.driver = uc.Chrome(options=options, enable_cdp_events=True, chrome_options=options)
+        options.add_argument("--no-sandbox")
+        options.add_argument("--window-size=1920,1080")
+        options.add_argument("--headless")
+        options.add_argument("--disable-gpu")
+        options.add_argument("--user-data-dir=/tmp/chrome")
+        options.add_argument('--disable-dev-shm-usage')
+
+
+        self.driver = uc.Chrome(options=options)
         self.driver.maximize_window()
         
         

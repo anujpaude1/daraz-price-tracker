@@ -47,5 +47,6 @@ def main():
         loop.run_until_complete(prisma.disconnect())
     except Exception as e:
         log.error(f"An error occurred: {e}")
+        log.error("Stack trace:", exc_info=True)
 if __name__ == "__main__":
     main()

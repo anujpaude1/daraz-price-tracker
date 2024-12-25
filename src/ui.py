@@ -10,6 +10,10 @@ async def main_menu_keyboard(context: CallbackContext):
     keyboard = [[InlineKeyboardButton('Track Price', callback_data='m1')],
               [InlineKeyboardButton('Search Better Price', callback_data='m2')],
               [InlineKeyboardButton('View Existing Product', callback_data='m2')],
+              [InlineKeyboardButton('Top Searched', callback_data='m2')],
+              [InlineKeyboardButton('Loot Deals', callback_data='m2')],
+
+
 
             ]
     return InlineKeyboardMarkup(keyboard)

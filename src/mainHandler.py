@@ -61,7 +61,8 @@ async def set_product(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await update.message.reply_text(await main_menu_message(), reply_markup=await main_menu_keyboard(context), parse_mode='HTML')
             except ValueError as e:
                 log.error("An error occurred: Invalid custom price")
-                await update.message.reply_text("Please enter a valid number for the custom price.")
+                log.error("Stack trace:", exc_info=True)
+                await update.message.reply_text("Waiting on your price for previous product...")
         
         
         else:
@@ -130,19 +131,22 @@ async def set_product(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 if context.user_data['task'] == 'track_price':
                     await update.message.reply_text(await track_menu_message(),
                                     reply_markup=await track_price_keyboard())
-                if context.user_data['task'] == 'search_better_price':
+                elif context.user_data['task'] == 'search_better_price':
                     await update.message.reply_text("Not Implemented Yet")
                     await update.message.reply_text(await main_menu_message(), reply_markup=await main_menu_keyboard(context),pass_mode='HTML')
                 else:
                     await update.message.reply_text(await task_menu_message(), reply_markup=await task_menu_keyboard())
-                    
+
             except Exception as e:
+                log.error(f"An error occurred: {e}")
+                log.error("Stack trace:", exc_info=True)
                 await update.message.reply_text(await task_menu_message(), reply_markup=await task_menu_keyboard())
 
 
 
     except Exception as e:
         log.error(f"An error occurred: {e}")
+        log.error("Stack trace:", exc_info=True)
         await update.message.reply_text("Hmm 🤔, something went wrong. Please try again.")
         await update.message.reply_text(await main_menu_message(), reply_markup=await main_menu_keyboard(context), parse_mode='HTML')
 
