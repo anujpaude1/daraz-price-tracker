@@ -1,4 +1,5 @@
 # Daraz Price Tracker
+Link : https://t.me/DarazTrackPriceBot
 
 This project is a Telegram bot that helps users track prices of products on Daraz. Users can receive notifications about price changes and view price history charts.
 
