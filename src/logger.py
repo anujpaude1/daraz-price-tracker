@@ -1,4 +1,3 @@
-from prisma import Prisma
 import logging
 import os
 

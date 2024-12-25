@@ -1,15 +1,14 @@
 import matplotlib
 matplotlib.use('Agg')  # Use the Agg backend for non-interactive plotting
 import matplotlib.pyplot as plt
-from prisma import Prisma
+from src.initialize import prisma, scraper
 import datetime
 import io
 
-prisma = Prisma()
+from src.scrapePrice import DarazScraper
+from src.initialize import prisma
 
 async def generate_price_chart(product_id: int) -> io.BytesIO:
-    # Connect to the Prisma client
-    await prisma.connect()
 
     # Fetch the price data for the given product
     prices = await prisma.price.find_many(
@@ -17,8 +16,6 @@ async def generate_price_chart(product_id: int) -> io.BytesIO:
         order={'timestamp': 'asc'}
     )
 
-    # Disconnect the Prisma client
-    await prisma.disconnect()
 
     # Extract the timestamps and prices
     timestamps = [price.timestamp for price in prices]
@@ -51,6 +48,27 @@ async def generate_price_chart(product_id: int) -> io.BytesIO:
     plt.close()
 
     return buf
+
+# Scraper function using DarazScraper
+async def fetch_price(product_url, product_id=None):
+    details = scraper.get_product_details(product_url)
+    if product_id:
+            product = await prisma.product.find_unique(where={'uniqueIdentifier': product_id})
+            if product:
+                current_price = int(details['Current Price'].replace('Rs. ', '').replace(',', ''))
+                print(f"Creating price entry with productId: {product.id} and price: {current_price}")
+                await prisma.price.create(data={
+                    'productId': product.id,
+                    'price': current_price
+                })
+                if current_price < product.lowestPrice:
+                    await prisma.product.update(where={'id': product.id}, data={'lowestPrice': current_price})
+                if current_price > product.highestPrice:
+                    await prisma.product.update(where={'id': product.id}, data={'highestPrice': current_price})
+                    await prisma.product.update(where={'id': product.id}, data={'lastFetched': datetime.now()})
+
+
+    return details
 
 # Example usage
 if __name__ == "__main__":

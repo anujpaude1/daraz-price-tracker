@@ -5,9 +5,11 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from pprint import pformat
 import json
-import time
+import time,datetime
 from selenium.webdriver import DesiredCapabilities
 from urllib.parse import urlparse
+
+import asyncio
 
 class DarazScraper:
     def __init__(self):
@@ -15,9 +17,11 @@ class DarazScraper:
         options = uc.ChromeOptions()
         options.page_load_strategy = 'none'
         options.set_capability('goog:loggingPrefs', {'performance': 'ALL'})
+        options.headless=True
         
         self.driver = uc.Chrome(options=options, enable_cdp_events=True, chrome_options=options)
         self.driver.maximize_window()
+        
         
         # Open the Daraz homepage
         homepage_url = "https://www.daraz.com.np/"
@@ -77,6 +81,8 @@ class DarazScraper:
 
     def __del__(self):
         self.driver.quit()
+
+
 
 # Example usage:
 if __name__ == "__main__":
