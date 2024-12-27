@@ -4,7 +4,7 @@ from telegram import Update
 import datetime
 from src.initialize import prisma
 from src.ui import main_menu_message, main_menu_keyboard, track_menu_message, track_price_keyboard
-
+from src.updateUser import schedule_product_update
 async def search_better_price(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.callback_query.answer("Not Implemented Yet")
 
@@ -32,6 +32,8 @@ async def daily_notification(update: Update, context: ContextTypes.DEFAULT_TYPE)
             data={'notificationInterval': 'daily'}
         )
         await update.callback_query.answer("Daily Notification Set")
+        await schedule_product_update(context.application,user,userproduct)
+
         await update.callback_query.edit_message_text(await main_menu_message(),reply_markup=await main_menu_keyboard(context), parse_mode='HTML')
 
 async def weekly_notification(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -44,6 +46,7 @@ async def weekly_notification(update: Update, context: ContextTypes.DEFAULT_TYPE
             where={'id': userproduct.id},
             data={'notificationInterval': 'weekly'}
         )
+        await schedule_product_update(context.application,user,userproduct)
         await update.callback_query.answer("Weekly Notification Set")
         await update.callback_query.edit_message_text(await main_menu_message(),reply_markup=await main_menu_keyboard(context), parse_mode='HTML')
 
@@ -58,6 +61,7 @@ async def minimum_price(update: Update, context: ContextTypes.DEFAULT_TYPE):
             data={'notificationInterval': 'minimum'}
         )
         await update.callback_query.answer("Minimum Price Notification Set")
+        await schedule_product_update(context.application,user,userproduct)
         await update.callback_query.edit_message_text(await main_menu_message(),reply_markup=await main_menu_keyboard(context), parse_mode='HTML')
 
 

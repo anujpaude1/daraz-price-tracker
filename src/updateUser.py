@@ -86,12 +86,17 @@ async def send_updates(context: CallbackContext):
                 await send_single_product_detail(context,uproduct)
 
 
-async def schedule_user_daily_update(user,application: Application):
+async def schedule_user_daily_update(user, application: Application):
+    userproducts = user.userProducts
+    if userproducts:
+        for uproduct in userproducts:
+            await schedule_product_update(application, user, uproduct)
+
+
+async def schedule_product_update(application: Application, user, uproduct):
+    user_id = user.telegramId
     notification_datetime = datetime.strptime(user.notificationTime, "%H:%M")
-
-
     notification_time = notification_datetime.time()
-
     notification_time_with_tz = time(
         hour=notification_time.hour,
         minute=notification_time.minute,
@@ -99,47 +104,33 @@ async def schedule_user_daily_update(user,application: Application):
         tzinfo=tz  # Attach the timezone
     )
     print(f"Scheduling daily updates for user {user.telegramId} at {notification_time_with_tz} with info {notification_time_with_tz.tzinfo}")
-    userproducts = user.userProducts
-    if userproducts:
-        for uproduct in userproducts:
-            if uproduct.notificationInterval == "daily":
-                application.job_queue.run_daily(
-                    send_updates,
-                    time=notification_time_with_tz,
-                    data={'user_id': user.telegramId,
-                        "uproduct":uproduct,
-                        "check":None},  # Use 'data' instead of 'context'  
-                )
-            elif uproduct.notificationInterval == "weekly":
-                application.job_queue.run_repeating(
-                send_updates,
-                interval=timedelta(weeks=1),
-                first=notification_time_with_tz,
-                data={'user_id': user.telegramId,
-                    "uproduct": uproduct,
-                    "check": None},  # Use 'data' instead of 'context'
-            )
-            elif uproduct.notificationInterval == "minimum":
-                application.job_queue.run_daily(
-                    send_updates,
-                    day=notification_time_with_tz.weekday(),
-                    time=notification_time_with_tz,
-                    data={'user_id': user.telegramId,
-                        "uproduct":uproduct,
-                        "check":"minimum"},  # Use 'data' instead of 'context'  
-                )
-            
-            elif uproduct.notificationInterval == "custom":
-                application.job_queue.run_daily(
-                    send_updates,
-                    day=notification_time_with_tz.weekday(),
-                    time=notification_time_with_tz,
-                    data={'user_id': user.telegramId,
-                        "uproduct":uproduct,
-                        "check":"custom"},  # Use 'data' instead of 'context'  
-                )
-            else:
-                pass
+    if uproduct.notificationInterval == "daily":
+        application.job_queue.run_daily(
+            send_updates,
+            time=notification_time_with_tz,
+            data={'user_id': user_id, "uproduct": uproduct, "check": None},
+        )
+    elif uproduct.notificationInterval == "weekly":
+        application.job_queue.run_repeating(
+            send_updates,
+            interval=timedelta(weeks=1),
+            first=notification_time_with_tz,
+            data={'user_id': user_id, "uproduct": uproduct, "check": None},
+        )
+    elif uproduct.notificationInterval == "minimum":
+        application.job_queue.run_daily(
+            send_updates,
+            time=notification_time_with_tz,
+            data={'user_id': user_id, "uproduct": uproduct, "check": "minimum"},
+        )
+    elif uproduct.notificationInterval == "custom":
+        application.job_queue.run_daily(
+            send_updates,
+            time=notification_time_with_tz,
+            data={'user_id': user_id, "uproduct": uproduct, "check": "custom"},
+        )
+    else:
+        pass
 
 async def schedule_jobs(application: Application):
     users = await prisma.user.find_many(
