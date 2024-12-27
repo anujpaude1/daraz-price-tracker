@@ -122,6 +122,7 @@ async def set_product(update: Update, context: ContextTypes.DEFAULT_TYPE):
                             'user': True
                         }
                     )
+                    
 
             # Send current product details to the user
             await send_single_product_detail(context, user_existing_product)
