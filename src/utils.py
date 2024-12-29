@@ -2,7 +2,7 @@ import matplotlib
 matplotlib.use('Agg')  # Use the Agg backend for non-interactive plotting
 import matplotlib.pyplot as plt
 from src.initialize import prisma, scraper
-import datetime
+from datetime import datetime
 import io
 
 from src.scrapePrice import DarazScraper
@@ -65,7 +65,8 @@ async def fetch_price(product_url, product_id=None):
                     await prisma.product.update(where={'id': product.id}, data={'lowestPrice': current_price})
                 if current_price > product.highestPrice:
                     await prisma.product.update(where={'id': product.id}, data={'highestPrice': current_price})
-                    await prisma.product.update(where={'id': product.id}, data={'lastFetched': datetime.now()})
+
+                await prisma.product.update(where={'id': product.id}, data={'lastFetched': datetime.now()})
 
 
     return details

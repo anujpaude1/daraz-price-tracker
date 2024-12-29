@@ -51,7 +51,9 @@ async def send_single_product_detail(context: CallbackContext, userProduct):
                         parse_mode='HTML'
                     )
                 except Exception as e:
-                    await context.bot.send_message(chat_id=user.telegramId, text=f"Failed to fetch price for {product.name}. Error: {str(e)}")
+                    # await context.bot.send_message(chat_id=user.telegramId, text=f"Failed to fetch price for {product.name}. Error: {str(e)}")
+                    log.error(f"An error occurred while fetching price for product {product.name}: {str(e)}")
+                    log.error("Stack trace:", exc_info=True)
             
             # Send the price chart
             photo = await generate_price_chart(product.id)
@@ -67,6 +69,7 @@ async def send_single_product_detail(context: CallbackContext, userProduct):
     except Exception as e:
         await context.bot.send_message(chat_id=user.telegramId, text=f"An error occurred while retrieving product details. Error: {str(e)}")
         log.error(f"An error occurred while sending daily updates to user {user.telegramId}: {str(e)}")
+        log.error("Stack trace:", exc_info=True)
 
 # Function to send updates to a specific user
 async def send_updates(context: CallbackContext):
@@ -138,3 +141,5 @@ async def schedule_jobs(application: Application):
     )
     for user in users:
         await schedule_user_daily_update(user,application=application)
+
+

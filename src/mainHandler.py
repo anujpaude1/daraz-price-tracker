@@ -63,7 +63,7 @@ async def set_product(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 context.user_data['user_product_id'] = None
 
                 # Send the main menu message
-                await update.message.reply_text(await main_menu_message(), reply_markup=await main_menu_keyboard(context), parse_mode='HTML')
+                await update.callback_query.message.reply_text(await main_menu_message(), reply_markup=await main_menu_keyboard(context), parse_mode='HTML')
             except ValueError as e:
                 log.error("An error occurred: Invalid custom price")
                 log.error("Stack trace:", exc_info=True)
@@ -156,3 +156,19 @@ async def set_product(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("Hmm 🤔, something went wrong. Please try again.")
         await update.message.reply_text(await main_menu_message(), reply_markup=await main_menu_keyboard(context), parse_mode='HTML')
 
+#function to return all products for a user
+async def get_all_products(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.callback_query.message.chat_id
+    user = await prisma.user.find_unique(where={'telegramId': str(user_id)}, include={'userProducts': {'include': {'product': {'include': {'prices': True}}, 'user': True}}})
+    for uproduct in user.userProducts:
+        await send_single_product_detail(context=context,userProduct=uproduct)
+        ...
+
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=await main_menu_message(), reply_markup=await main_menu_keyboard(context), parse_mode='HTML')
+
+
+#function to send loot deals telegram server invite link
+
+async def send_loot_deals(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await context.bot.send_message(chat_id=update.effective_chat.id, text= "Please join our telegram server for loot deals : https://t.me")
+    await update.callback_query.edit_message_text(await main_menu_message(), reply_markup=await main_menu_keyboard(context),parse_mode='HTML')
