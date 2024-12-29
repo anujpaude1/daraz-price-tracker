@@ -8,10 +8,9 @@ async def main_menu_keyboard(context: CallbackContext):
     context.user_data['task'] = None
 
     keyboard = [[InlineKeyboardButton('Track Price', callback_data='m1')],
-              [InlineKeyboardButton('Search Better Price', callback_data='m2')],
-              [InlineKeyboardButton('View Existing Product', callback_data='m2')],
-              [InlineKeyboardButton('Top Searched', callback_data='m2')],
-              [InlineKeyboardButton('Loot Deals', callback_data='m2')],
+              # [InlineKeyboardButton('Search Better Price', callback_data='m2')],
+              [InlineKeyboardButton('My Products', callback_data='m3')],
+              [InlineKeyboardButton('Loot Deals', callback_data='m4')],
 
 
 
@@ -51,7 +50,7 @@ async def welcome_message():
     )
 
 async def main_menu_message():
-    return '<b> Please choose an option or directly send product link ... </b>'
+    return '<b> ------- Main Menu ------- </b>'
 
 async def task_menu_message():
     return 'What do you want to do?'

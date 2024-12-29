@@ -4,7 +4,7 @@ from pytz import timezone
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters,CallbackQueryHandler,ContextTypes, CallbackContext
 from src.ui import welcome_message, main_menu_message, main_menu_keyboard, task_menu_message, task_menu_keyboard, track_menu_message, track_price_keyboard
-from src.updateUser import schedule_user_daily_update,send_single_product_detail
+from src.updateUser import schedule_user_daily_update,send_single_product_detail,schedule_product_update
 from src.utils import fetch_price
 from src.initialize import prisma,tz,log
 
@@ -41,6 +41,11 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # Message handler
 async def set_product(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
+        original_product_link = update.message.text
+        url_pattern = re.compile(r'https?://(?:[-\w.]|(?:%[\da-fA-F]{2})|[/?=&])+')
+        if url_pattern:
+            context.user_data['awaiting_product_link']= True  
+
         if context.user_data.get('awaiting_product_link')==False:
             try:
                 custom_price = int(update.message.text)
@@ -58,7 +63,7 @@ async def set_product(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 context.user_data['user_product_id'] = None
 
                 # Send the main menu message
-                await update.message.reply_text(await main_menu_message(), reply_markup=await main_menu_keyboard(context), parse_mode='HTML')
+                await update.callback_query.message.reply_text(await main_menu_message(), reply_markup=await main_menu_keyboard(context), parse_mode='HTML')
             except ValueError as e:
                 log.error("An error occurred: Invalid custom price")
                 log.error("Stack trace:", exc_info=True)
@@ -71,7 +76,7 @@ async def set_product(update: Update, context: ContextTypes.DEFAULT_TYPE):
             url_pattern = re.compile(r'https?://(?:[-\w.]|(?:%[\da-fA-F]{2})|[/?=&])+')
             if not url_pattern.search(original_product_link):
                 await update.message.reply_text("Please send a valid product link.")
-                await update.message.reply_text(await main_menu_message(), reply_markup=await main_menu_keyboard(context))
+                await update.message.reply_text(await main_menu_message(), reply_markup=await main_menu_keyboard(context), parse_mode='HTML')
                 return
             # Extract the actual product link from the original link
             product_link = re.search(url_pattern, original_product_link).group(0)
@@ -123,6 +128,7 @@ async def set_product(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         }
                     )
 
+
             # Send current product details to the user
             await send_single_product_detail(context, user_existing_product)
             context.user_data['user_product_id'] = user_existing_product.id
@@ -150,3 +156,19 @@ async def set_product(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("Hmm 🤔, something went wrong. Please try again.")
         await update.message.reply_text(await main_menu_message(), reply_markup=await main_menu_keyboard(context), parse_mode='HTML')
 
+#function to return all products for a user
+async def get_all_products(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.callback_query.message.chat_id
+    user = await prisma.user.find_unique(where={'telegramId': str(user_id)}, include={'userProducts': {'include': {'product': {'include': {'prices': True}}, 'user': True}}})
+    for uproduct in user.userProducts:
+        await send_single_product_detail(context=context,userProduct=uproduct)
+        ...
+
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=await main_menu_message(), reply_markup=await main_menu_keyboard(context), parse_mode='HTML')
+
+
+#function to send loot deals telegram server invite link
+
+async def send_loot_deals(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await context.bot.send_message(chat_id=update.effective_chat.id, text= "Please join our telegram server for loot deals : https://t.me")
+    await update.callback_query.edit_message_text(await main_menu_message(), reply_markup=await main_menu_keyboard(context),parse_mode='HTML')

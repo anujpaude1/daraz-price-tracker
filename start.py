@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 from pytz import timezone  # Import timezone from pytz
 from src.updateUser import schedule_jobs
-from src.mainHandler import main_menu, start, set_product
+from src.mainHandler import main_menu, start, set_product,get_all_products,send_loot_deals
 from src.callBack import daily_notification, weekly_notification, minimum_price, custom_minimum_price,track_price, search_better_price
 
 from telegram.ext import Application, CommandHandler, MessageHandler, filters,CallbackQueryHandler
@@ -36,6 +36,9 @@ def main():
         application.add_handler(CallbackQueryHandler(weekly_notification, pattern='ma2'))
         application.add_handler(CallbackQueryHandler(minimum_price, pattern='ma3'))
         application.add_handler(CallbackQueryHandler(custom_minimum_price, pattern='ma4'))
+
+        application.add_handler(CallbackQueryHandler(get_all_products, pattern='m3'))
+        application.add_handler(CallbackQueryHandler(send_loot_deals, pattern='m4'))
 
         # Schedule jobs for daily updates
         loop.run_until_complete(schedule_jobs(application))
