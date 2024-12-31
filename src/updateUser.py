@@ -8,6 +8,8 @@ from src.initialize import prisma,tz,log
 async def send_single_product_detail(context: CallbackContext, userProduct):
     try:
         product = userProduct.product
+        user=context._user_id
+        print(f'user is {user}')
         if product:
             user = userProduct.user
             if product.lastFetched and product.lastFetched.date() == date.today():
