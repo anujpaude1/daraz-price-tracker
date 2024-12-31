@@ -112,9 +112,13 @@ async def set_product(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     'productId': existing_product.id
                 },
                     include={
-                        'product': True,
-                        'user': True
-                    })
+                            'product': {
+                                'include': {
+                                    'prices': True
+                                }
+                            },
+                            'user': True
+                        })
                 if not user_existing_product:
                     user_existing_product = await prisma.userproduct.create(
                         data={
@@ -123,7 +127,11 @@ async def set_product(update: Update, context: ContextTypes.DEFAULT_TYPE):
                             'productId': existing_product.id
                         },
                         include={
-                            'product': True,
+                            'product': {
+                                'include': {
+                                    'prices': True
+                                }
+                            },
                             'user': True
                         }
                     )

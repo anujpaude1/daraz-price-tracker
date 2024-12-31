@@ -31,7 +31,6 @@ def main():
         application.add_handler(CallbackQueryHandler(search_better_price, pattern='m2'))
         application.add_handler(CallbackQueryHandler(main_menu, pattern='main'))
 
-        
         application.add_handler(CallbackQueryHandler(daily_notification, pattern='ma1'))
         application.add_handler(CallbackQueryHandler(weekly_notification, pattern='ma2'))
         application.add_handler(CallbackQueryHandler(minimum_price, pattern='ma3'))
